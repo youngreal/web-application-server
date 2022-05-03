@@ -15,7 +15,9 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* 
+*    InputStream : 1byte씩 읽히기때문에, 숫자를입력해도 아스키코드값으로 출력됨
+     InputStreamReader : 문자로읽을수있음, InputStream객체를 입력으로 가지고있어야함
+     BufferedReader : 통째로읽을수있음, InputStream을사용할때 배열의 크기를 일일히 정해줘야한다는 장점을 상쇄시킬수있음
 
 ### 요구사항 2 - get 방식으로 회원가입
 * 
