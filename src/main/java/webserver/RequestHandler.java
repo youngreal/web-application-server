@@ -87,9 +87,11 @@ public class RequestHandler extends Thread {
                 // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
                 DataOutputStream dos = new DataOutputStream(out);
                 response200HeaderBody(dos, body.length, brBody);
+                body = Files.readAllBytes(new File("./webapp" + url).toPath());
                 Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(brBody);
                 User user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name"),parsedUrl.get("email"));
                 responseBody(dos, body);
+
 
             }
 
@@ -136,7 +138,8 @@ public class RequestHandler extends Thread {
 
     private void response200HeaderBody(DataOutputStream dos, int length, String body) {
         try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("HTTP/1.1 302 FOUND \r\n");
+            dos.writeBytes("Location: http://localhost:8080/index.html\r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + length + "\r\n");
             dos.writeBytes("\r\n");
