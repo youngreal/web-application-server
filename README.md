@@ -21,7 +21,9 @@
 
 ### 요구사항 2 - get 방식으로 회원가입
 * HTTP요청 메시지를 일일히 파싱해서 값을 전달하는 과정이 생각보다 너무 까다로웠다
-* 부끄럽지만 HttpRequestUtils.parseQueryString()메서드를 처음알았다.![image](https://user-images.githubusercontent.com/59333182/166653234-9f512a75-3ee4-48a8-8517-479bda8efba9.png)
+* 부끄럽지만 HttpRequestUtils.parseQueryString()메서드를 처음알았다.
+* ![image](https://user-images.githubusercontent.com/59333182/166653234-9f512a75-3ee4-48a8-8517-479bda8efba9.png)
+* 
  안을 들어가보면 구분자 &를 기준으로 요청메시지를 파싱해주기때문에, get방식으로 쿼리스트링이 달려있는 요청메시지를 이름=값으로 구분할수있었다.
 
 ### 요구사항 3 - post 방식으로 회원가입
