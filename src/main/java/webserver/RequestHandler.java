@@ -2,10 +2,15 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Map;
 
+import com.google.common.base.Utf8;
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
 
 import static util.IndexToken.requestSplit;
 
@@ -29,16 +34,35 @@ public class RequestHandler extends Thread {
          */
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            InputStreamReader reader = new InputStreamReader(in);
-            BufferedReader br = new BufferedReader(reader);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             String line = br.readLine();
+            System.out.println("line="+ line);
             String url = requestSplit(line);
-            System.out.println("requestSplit = " + line);
+            System.out.println("url =" + url);
 
 
-            byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
+                byte[] body = "Hello World".getBytes();
+         if(url.equals("/index.html")) {
+             body = Files.readAllBytes(new File("./webapp" + url).toPath());
+         }
+         if(url.equals("/user/form.html")){
+             body = Files.readAllBytes(new File("./webapp" + url).toPath());
+         }
 
-            String[] tokens = line.split(" ");
+            if (url.contains("?")) {
+                String subUrl = url.substring(13);
+                System.out.println("subUrl =" + subUrl);
+                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(subUrl);
+                User user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name")
+                        ,parsedUrl.get("email"));
+
+                System.out.println("userId=" +user.getUserId());
+                System.out.println("userName= " +user.getName());
+                System.out.println("userEmail=" + user.getEmail());
+                System.out.println("userPassword=" + user.getPassword());
+            }
+
+
             while (!"".equals(line)) {
                 if (line == null) {
                     return;
