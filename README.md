@@ -15,14 +15,14 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-    InputStream : 1byte씩 읽히기때문에, 숫자를입력해도 아스키코드값으로 출력됨
-    
-     InputStreamReader : 문자로읽을수있음, InputStream객체를 입력으로 가지고있어야함
-     
-     BufferedReader : 통째로읽을수있음, InputStream을사용할때 배열의 크기를 일일히 정해줘야한다는 장점을 상쇄시킬수있음
+-InputStream : 1byte씩 읽히기때문에, 숫자를입력해도 아스키코드값으로 출력됨
+-InputStreamReader : 문자로읽을수있음, InputStream객체를 입력으로 가지고있어야함
+-BufferedReader : 통째로읽을수있음, InputStream을사용할때 배열의 크기를 일일히 정해줘야한다는 장점을 상쇄시킬수있음
 
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* HTTP요청 메시지를 일일히 파싱해서 값을 전달하는 과정이 생각보다 너무 까다로웠다
+* 부끄럽지만 HttpRequestUtils.parseQueryString()메서드를 처음알았다.![image](https://user-images.githubusercontent.com/59333182/166653234-9f512a75-3ee4-48a8-8517-479bda8efba9.png)
+ 안을 들어가보면 구분자 &를 기준으로 요청메시지를 파싱해주기때문에, get방식으로 쿼리스트링이 달려있는 요청메시지를 이름=값으로 구분할수있었다.
 
 ### 요구사항 3 - post 방식으로 회원가입
 * 
