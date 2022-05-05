@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Map;
 
+import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
+    private static User user;
 
 
     public RequestHandler(Socket connectionSocket) {
@@ -37,71 +39,123 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             String line = br.readLine();
-            System.out.println("line="+ line);
             String url = requestSplit(line);
-            System.out.println("url =" + url);
 
             byte[] body = "Hello World".getBytes();
 
+            if (url.equals("/")) {
+                if (printAllLine(line, br)) return;
+                ResponseBodyMethod(out, body);
+            }
 
          if(url.equals("/index.html")) {
              body = Files.readAllBytes(new File("./webapp" + url).toPath());
-             printAllLine(line,br);
-             ResponseBodyMethod( out, body);
-             return;
+             if (printAllLine(line, br)) return;
+             ResponseBodyMethod(out,body);
          }
-
 
          if(url.equals("/user/form.html")){
              body = Files.readAllBytes(new File("./webapp" + url).toPath());
-             printAllLine(line, br);
-             ResponseBodyMethod(out, body);
-             return;
+             if (printAllLine(line, br)) return;
+             ResponseBodyMethod(out,body);
          }
 
-            /**
-             * get 방식 회원가입할때
-             */
-            if (url.contains("?")) {
-                String subUrl = url.substring(13);
-                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(subUrl);
-                User user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name"),parsedUrl.get("email"));
-                printAllLine(line,br);
-                ResponseBodyMethod(out, body);
-                return;
-            }
+         if(url.equals("/user/login_failed.html")){
+             body = Files.readAllBytes(new File("./webapp" + url).toPath());
+             if (printAllLine(line, br)) return;
+             ResponseBodyMethod(out, body);
+         }
 
             /**
              * post 방식 회원가입할때
              */
             if(url.equals("/user/create")){
-
-//                String subUrl = url.substring(13);
-//                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(subUrl);
-//                User user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name"),parsedUrl.get("email"));
-//                System.out.println("parsedUrl =" + parsedUrl);
-
                 printAllLine(line, br);
-                String brBody = IOUtils.readData(br, 87);
+                String brBody = IOUtils.readData(br, 89); // 요청메시지의 body를 읽는다.
                 System.out.println("brBody= " + brBody);
                 // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-                DataOutputStream dos = new DataOutputStream(out);
-                response200HeaderBody(dos, body.length, brBody);
+                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(brBody); //요청메시지의 body를 &를 기준으로 파싱한다
+                user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name"),parsedUrl.get("email")); //user 생성자 생성
+                DataBase.addUser(user); // DB에 저장?
+
+                DataOutputStream dos = new DataOutputStream(out); // 서버-> 클라이언트
+                response302HeaderBody(dos, body.length, brBody); // 302 redirect + index로 돌림 + 유저정보 body에 실음
+            }
+            /**
+             * 로그인 페이지 들어갔을때
+             */
+            if (url.equals("/user/login.html")) {
                 body = Files.readAllBytes(new File("./webapp" + url).toPath());
-                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(brBody);
-                User user = new User(parsedUrl.get("userId"),parsedUrl.get("password"),parsedUrl.get("name"),parsedUrl.get("email"));
-                responseBody(dos, body);
-
-
+                printAllLine(line, br);
+                ResponseBodyMethod(out, body);
             }
 
-            if (printAllLine(line, br)) return;
-            ResponseBodyMethod(out, body);
+            /**
+             * 로그인 페이지에서 post방식으로 로그인시도
+             */
+            if (url.equals("/user/login")) {
+                /**
+                 * http 바디 읽기
+                 */
+                printAllLine(line, br);
+                String brBody = IOUtils.readData(br, 27);
+                System.out.println("brBody= " + brBody);
+                Map<String, String> parsedUrl = HttpRequestUtils.parseQueryString(brBody);
+
+                /**
+                 * 로그인 성공시
+                 */
+                DataOutputStream dos = new DataOutputStream(out);
+                if(DataBase.findUserById(user.getUserId()).getUserId().equals(parsedUrl.get("userId"))&&
+                        DataBase.findUserById(user.getUserId()).getPassword().equals(parsedUrl.get("password"))){
+                    System.out.println("성공시 url= " + url);
+                    System.out.println("로그인성공");
+                    responseSetCookie(dos,body.length, brBody);
+                }
+                /**
+                 * 로그인 실패시
+                 */
+                else {
+                    System.out.println("로그인 실패");
+                    responseSetCookieFalse(dos, body.length, brBody);
+                }
+            }
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
+    private void responseSetCookieFalse(DataOutputStream dos, int length, String body) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 FOUND \r\n");
+            dos.writeBytes("Location: http://localhost:8080/user/login_failed.html\r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Set-Cookie: logined=false\r\n");
+            dos.writeBytes("Content-Length: " + length + "\r\n");
+            dos.writeBytes("\r\n");
+            dos.writeBytes(body);
+
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+
+    }
+
+    private void responseSetCookie(DataOutputStream dos, int lengthOfBodyContent, String body) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 FOUND \r\n");
+            dos.writeBytes("Location: http://localhost:8080/index.html\r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Set-Cookie: logined=true\r\n");
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+            dos.writeBytes(body);
+
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
 
 
     private boolean printAllLine(String line, BufferedReader br) throws IOException {
@@ -136,7 +190,7 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response200HeaderBody(DataOutputStream dos, int length, String body) {
+    private void response302HeaderBody(DataOutputStream dos, int length, String body) {
         try {
             dos.writeBytes("HTTP/1.1 302 FOUND \r\n");
             dos.writeBytes("Location: http://localhost:8080/index.html\r\n");
