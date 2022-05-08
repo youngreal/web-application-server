@@ -35,10 +35,11 @@ bufferedReader에서 본문데이터를 읽는 메소드를 알게되었다.
 *  서블릿이 빨리 나타났으면좋겠다.. 괴로운과정이란걸 한번더 깨닫게되었다..
 
 ### 요구사항 4 - redirect 방식으로 이동
-* 
+* easy
 
 ### 요구사항 5 - cookie
-* 
+* 응답response에 cookie값을 직접 세팅할수있었다.
+* User객체를 어떻게 Database클래스에 저장하여 상태를 저장할까 고민을하다가 static으로 user를 설정해주어 값을꺼내오게끔 하였다..
 
 ### 요구사항 6 - stylesheet 적용
 * 
